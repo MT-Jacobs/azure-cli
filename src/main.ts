@@ -33,7 +33,7 @@ export async function main(){
                     throw stderr
                 }
             } catch (err) {
-                console.log('Failed to fetch az cli version from agent. Reverting back to latest.')
+                core.info('Failed to fetch az cli version from agent. Reverting back to latest.')
                 azcliversion = 'latest'
             }
         }
@@ -70,11 +70,11 @@ export async function main(){
         command += ` ${environmentVariables} `;
         command += `--name ${CONTAINER_NAME} `;
         command += ` mcr.microsoft.com/azure-cli:${azcliversion} ${startCommand}`;
-        console.log(`${START_SCRIPT_EXECUTION_MARKER}${azcliversion}`);
-        console.log("It is I, Matthew. Here is the log of the docker command that you have requested:");
-        console.log(command);
+        core.info(`${START_SCRIPT_EXECUTION_MARKER}${azcliversion}`);
+        core.info("It is I, Matthew. Here is the log of the docker command that you have requested:");
+        core.info(command);
         await executeDockerCommand(command);
-        console.log("az script ran successfully.");
+        core.info("az script ran successfully.");
     } catch (error) {
         core.error(error);
         throw error;
@@ -83,7 +83,7 @@ export async function main(){
         // clean up
         const scriptFilePath: string = path.join(TEMP_DIRECTORY, scriptFileName);
         await deleteFile(scriptFilePath);
-        console.log("cleaning up container...");
+        core.info("cleaning up container...");
         await executeDockerCommand(` container rm --force ${CONTAINER_NAME} `, true);
     }
 };
@@ -125,13 +125,13 @@ const executeDockerCommand = async (dockerCommand: string, continueOnError: bool
     var execOptions: any = {
         outStream: new NullOutstreamStringWritable({ decodeStrings: false }),
         listeners: {
-            stdout: (data: any) => console.log(data.toString()), //to log the script output while the script is running.
+            stdout: (data: any) => core.info(data.toString()), //to log the script output while the script is running.
             errline: (data: string) => {
                 if (!shouldOutputErrorStream) {
                     errorStream += data + os.EOL;
                 }
                 else {
-                    console.log(data);
+                    core.info(data);
                 }
                 if (data.trim() === START_SCRIPT_EXECUTION_MARKER) {
                     shouldOutputErrorStream = true;
